@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pay — Bharadwaj Boys Hostel</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:sans-serif;background:#f7f6f2;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+  .box{background:#fff;border-radius:14px;padding:32px 24px;text-align:center;width:100%;max-width:340px;box-shadow:0 4px 24px rgba(0,0,0,0.09)}
+  .icon{font-size:44px;margin-bottom:14px}
+  h2{font-size:17px;color:#1a1a18;margin-bottom:6px;font-weight:600}
+  .hostel{font-size:12px;color:#6b6b67;margin-bottom:18px}
+  .amount{font-size:30px;font-weight:700;color:#1d9e75;margin-bottom:4px}
+  .upi{font-size:13px;color:#6b6b67;margin-bottom:24px;font-family:monospace;background:#f7f6f2;padding:6px 12px;border-radius:6px;display:inline-block}
+  .apps{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+  .btn{display:block;padding:13px 20px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:600;color:#fff;cursor:pointer;border:none;width:100%;text-align:center}
+  .btn-g{background:#1a73e8}
+  .btn-p{background:#5f259f}
+  .btn-t{background:#00baf2}
+  .btn-any{background:#1a1a18}
+  .note{font-size:11px;color:#9b9b96;line-height:1.6;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="icon">💳</div>
+  <h2 id="hostel-name">Bharadwaj Boys Hostel</h2>
+  <div class="hostel">Daliganj, Lucknow</div>
+  <div class="amount" id="amt"></div>
+  <div class="upi" id="upi-show"></div>
+  <div class="apps">
+    <a class="btn btn-g" id="gpay-btn">Open in GPay</a>
+    <a class="btn btn-p" id="phonepay-btn">Open in PhonePe</a>
+    <a class="btn btn-t" id="paytm-btn">Open in Paytm</a>
+    <a class="btn btn-any" id="any-btn">Open in any UPI App</a>
+  </div>
+  <div class="note">Tap your preferred UPI app above.<br>If it does not open, manually pay to the UPI ID shown.</div>
+</div>
+<script>
+  const p = new URLSearchParams(window.location.search);
+  const pa  = p.get('pa') || '';
+  const am  = p.get('am') || '';
+  const pn  = p.get('pn') || 'Bharadwaj Boys Hostel';
+  const tn  = p.get('tn') || 'Hostel Payment';
+
+  if(am)  document.getElementById('amt').textContent = 'Rs.' + parseFloat(am).toLocaleString('en-IN');
+  if(pa)  document.getElementById('upi-show').textContent = 'UPI ID: ' + pa;
+  if(pn)  document.getElementById('hostel-name').textContent = pn;
+
+  const base = `?pa=${encodeURIComponent(pa)}&pn=${encodeURIComponent(pn)}&am=${am}&cu=INR&tn=${encodeURIComponent(tn)}`;
+
+  // Each button uses app-specific scheme — NO auto redirect
+  document.getElementById('gpay-btn').href      = 'tez://upi/pay' + base;
+  document.getElementById('phonepay-btn').href  = 'phonepe://pay' + base;
+  document.getElementById('paytm-btn').href     = 'paytmmp://pay' + base;
+  document.getElementById('any-btn').href       = 'upi://pay' + base;
+</script>
+</body>
+</html>
