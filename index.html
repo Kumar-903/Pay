@@ -4,57 +4,114 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pay — Bharadwaj Boys Hostel</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:sans-serif;background:#f7f6f2;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-  .box{background:#fff;border-radius:14px;padding:32px 24px;text-align:center;width:100%;max-width:340px;box-shadow:0 4px 24px rgba(0,0,0,0.09)}
-  .icon{font-size:44px;margin-bottom:14px}
-  h2{font-size:17px;color:#1a1a18;margin-bottom:6px;font-weight:600}
-  .hostel{font-size:12px;color:#6b6b67;margin-bottom:18px}
-  .amount{font-size:30px;font-weight:700;color:#1d9e75;margin-bottom:4px}
-  .upi{font-size:13px;color:#6b6b67;margin-bottom:24px;font-family:monospace;background:#f7f6f2;padding:6px 12px;border-radius:6px;display:inline-block}
-  .apps{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
-  .btn{display:block;padding:13px 20px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:600;color:#fff;cursor:pointer;border:none;width:100%;text-align:center}
+  .box{background:#fff;border-radius:16px;padding:28px 22px;text-align:center;width:100%;max-width:360px;box-shadow:0 4px 28px rgba(0,0,0,0.10)}
+  h2{font-size:17px;color:#1a1a18;font-weight:600;margin-bottom:2px}
+  .sub{font-size:12px;color:#6b6b67;margin-bottom:18px}
+  .amount{font-size:32px;font-weight:700;color:#1d9e75;margin-bottom:4px}
+  .upi-id{font-size:12px;color:#6b6b67;background:#f7f6f2;padding:5px 12px;border-radius:6px;display:inline-block;font-family:monospace;margin-bottom:20px}
+
+  /* QR Section */
+  .qr-section{margin-bottom:22px}
+  .qr-label{font-size:12px;color:#6b6b67;margin-bottom:10px;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+  .qr-wrap{display:inline-block;padding:12px;background:#fff;border:1.5px solid #e0e0dd;border-radius:12px;cursor:pointer;transition:box-shadow .15s}
+  .qr-wrap:hover{box-shadow:0 2px 12px rgba(0,0,0,0.12)}
+  #qrcode canvas, #qrcode img{display:block}
+  .qr-tap-hint{font-size:11px;color:#9b9b96;margin-top:8px}
+
+  /* Divider */
+  .divider{display:flex;align-items:center;gap:10px;margin:18px 0;color:#9b9b96;font-size:12px}
+  .divider::before,.divider::after{content:'';flex:1;height:.5px;background:#e0e0dd}
+
+  /* App buttons */
+  .apps{display:flex;flex-direction:column;gap:9px;margin-bottom:8px}
+  .btn{display:block;padding:13px 20px;border-radius:10px;text-decoration:none;font-size:14px;font-weight:600;color:#fff;width:100%;text-align:center;border:none;cursor:pointer}
   .btn-g{background:#1a73e8}
   .btn-p{background:#5f259f}
   .btn-t{background:#00baf2}
   .btn-any{background:#1a1a18}
-  .note{font-size:11px;color:#9b9b96;line-height:1.6;margin-top:14px}
+
+  .note{font-size:11px;color:#9b9b96;line-height:1.6;margin-top:14px;padding-top:14px;border-top:.5px solid #e0e0dd}
+  .err{color:#a32d2d;font-size:13px;padding:20px}
 </style>
 </head>
 <body>
 <div class="box">
-  <div class="icon">💳</div>
-  <h2 id="hostel-name">Bharadwaj Boys Hostel</h2>
-  <div class="hostel">Daliganj, Lucknow</div>
-  <div class="amount" id="amt"></div>
-  <div class="upi" id="upi-show"></div>
+  <h2 id="pn-text">Bharadwaj Boys Hostel</h2>
+  <div class="sub">Daliganj, Lucknow</div>
+
+  <div class="amount" id="amt-text"></div>
+  <div class="upi-id" id="upi-text"></div>
+
+  <!-- QR Code with amount embedded -->
+  <div class="qr-section">
+    <div class="qr-label">Scan QR to Pay</div>
+    <div class="qr-wrap" id="qr-wrap" onclick="tapToPay()" title="Tap to open payment app">
+      <div id="qrcode"></div>
+    </div>
+    <div class="qr-tap-hint">Tap QR to open payment app (Android)</div>
+  </div>
+
+  <div class="divider">or choose your UPI app</div>
+
   <div class="apps">
     <a class="btn btn-g" id="gpay-btn">Open in GPay</a>
-    <a class="btn btn-p" id="phonepay-btn">Open in PhonePe</a>
+    <a class="btn btn-p" id="phone-btn">Open in PhonePe</a>
     <a class="btn btn-t" id="paytm-btn">Open in Paytm</a>
     <a class="btn btn-any" id="any-btn">Open in any UPI App</a>
   </div>
-  <div class="note">Tap your preferred UPI app above.<br>If it does not open, manually pay to the UPI ID shown.</div>
+
+  <div class="note">
+    Amount embedded in QR — cannot be changed by payer.<br>
+    If tap does not work, scan QR with your camera app.
+  </div>
 </div>
+
 <script>
-  const p = new URLSearchParams(window.location.search);
+  const p   = new URLSearchParams(window.location.search);
   const pa  = p.get('pa') || '';
   const am  = p.get('am') || '';
   const pn  = p.get('pn') || 'Bharadwaj Boys Hostel';
   const tn  = p.get('tn') || 'Hostel Payment';
+  const cu  = 'INR';
 
-  if(am)  document.getElementById('amt').textContent = 'Rs.' + parseFloat(am).toLocaleString('en-IN');
-  if(pa)  document.getElementById('upi-show').textContent = 'UPI ID: ' + pa;
-  if(pn)  document.getElementById('hostel-name').textContent = pn;
+  if(!pa || !am){
+    document.querySelector('.box').innerHTML = '<div class="err">Invalid payment link. Please contact the hostel.</div>';
+    throw new Error('Missing params');
+  }
 
-  const base = `?pa=${encodeURIComponent(pa)}&pn=${encodeURIComponent(pn)}&am=${am}&cu=INR&tn=${encodeURIComponent(tn)}`;
+  // Display info
+  document.getElementById('amt-text').textContent = 'Rs.' + parseFloat(am).toLocaleString('en-IN');
+  document.getElementById('upi-text').textContent  = 'UPI: ' + pa;
+  document.getElementById('pn-text').textContent   = pn;
 
-  // Each button uses app-specific scheme — NO auto redirect
-  document.getElementById('gpay-btn').href      = 'tez://upi/pay' + base;
-  document.getElementById('phonepay-btn').href  = 'phonepe://pay' + base;
-  document.getElementById('paytm-btn').href     = 'paytmmp://pay' + base;
-  document.getElementById('any-btn').href       = 'upi://pay' + base;
+  // UPI payment string — amount is embedded, payer cannot change it
+  const upiStr = `upi://pay?pa=${encodeURIComponent(pa)}&pn=${encodeURIComponent(pn)}&am=${am}&cu=${cu}&tn=${encodeURIComponent(tn)}`;
+
+  // Generate QR code with amount embedded
+  new QRCode(document.getElementById('qrcode'), {
+    text: upiStr,
+    width: 200,
+    height: 200,
+    colorDark: '#1a1a18',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  // App-specific deep links
+  const base = `?pa=${encodeURIComponent(pa)}&pn=${encodeURIComponent(pn)}&am=${am}&cu=${cu}&tn=${encodeURIComponent(tn)}`;
+  document.getElementById('gpay-btn').href  = 'tez://upi/pay'    + base;
+  document.getElementById('phone-btn').href = 'phonepe://pay'    + base;
+  document.getElementById('paytm-btn').href = 'paytmmp://pay'   + base;
+  document.getElementById('any-btn').href   = 'upi://pay'       + base;
+
+  // Tap QR to pay (Android)
+  function tapToPay(){
+    window.location.href = upiStr;
+  }
 </script>
 </body>
 </html>
