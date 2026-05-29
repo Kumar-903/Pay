@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pay — Bharadwaj Boys Hostel</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:sans-serif;background:#f7f6f2;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+  .box{background:#fff;border-radius:16px;padding:30px 22px;text-align:center;width:100%;max-width:340px;box-shadow:0 4px 28px rgba(0,0,0,0.10)}
+  h2{font-size:17px;color:#1a1a18;font-weight:600;margin-bottom:2px}
+  .sub{font-size:12px;color:#6b6b67;margin-bottom:18px}
+  .amount{font-size:34px;font-weight:700;color:#1d9e75;margin-bottom:4px}
+  .upi-id{font-size:12px;color:#6b6b67;background:#f7f6f2;padding:5px 12px;border-radius:6px;display:inline-block;font-family:monospace;margin-bottom:22px}
+  .qr-label{font-size:12px;color:#6b6b67;margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+  .qr-wrap{display:inline-block;padding:14px;background:#fff;border:2px solid #e0e0dd;border-radius:14px}
+  #qrcode canvas,#qrcode img,#hosted-qr{display:block}
+  #hosted-qr{width:210px;height:210px;object-fit:contain;border-radius:4px}
+  .scan-hint{font-size:12px;color:#6b6b67;margin-top:10px;line-height:1.6}
+  .note{font-size:11px;color:#9b9b96;margin-top:18px;padding-top:16px;border-top:.5px solid #e0e0dd;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2 id="pn-text">Bharadwaj Boys Hostel</h2>
+  <div class="sub">Daliganj, Lucknow</div>
+  <div class="amount" id="amt-text"></div>
+  <div id="upi-badge"></div>
+  <div class="qr-label">Scan to Pay</div>
+  <div class="qr-wrap">
+    <div id="qrcode"></div>
+    <img id="hosted-qr" src="" alt="QR Code" style="display:none">
+  </div>
+  <div class="scan-hint">Open any UPI app and scan this QR code</div>
+  <div class="note">Amount is fixed and cannot be changed by payer.</div>
+</div>
+<script>
+  // ── HARDCODED — UPI ID is FIXED here, cannot be changed via URL ─────
+  const OWNER_UPI   = '7839077777@ptsbi';
+  const HOSTEL_NAME = 'Bharadwaj Boys Hostel';
+
+  // Only amount and room label come from URL — UPI ID NEVER comes from URL
+  const p     = new URLSearchParams(window.location.search);
+  const am    = p.get('am') || '';
+  const tn    = p.get('tn') || '';
+  const useqr = p.get('useqr') === '1';
+
+  // Validate amount strictly — must be positive number, nothing else
+  const amNum = parseFloat(am);
+  if(!am || isNaN(amNum) || amNum <= 0 || amNum > 999999){
+    document.querySelector('.box').innerHTML = '<p style="color:#a32d2d;padding:20px;font-family:sans-serif;font-size:14px">Invalid payment link.<br>Please contact the hostel directly.</p>';
+    throw new Error('Invalid amount');
+  }
+
+  // Sanitize room label — strip all HTML, allow only safe characters
+  const safeTn = tn.replace(/<[^>]*>/g, '').replace(/[^a-zA-Z0-9 _-]/g, '').substring(0, 40);
+
+  // Display — hostel name and UPI ID are hardcoded, never from URL
+  document.getElementById('amt-text').textContent = 'Rs.' + amNum.toLocaleString('en-IN');
+  document.getElementById('pn-text').textContent  = HOSTEL_NAME;
+
+  const badge = document.createElement('div');
+  badge.className = 'upi-id';
+  badge.textContent = 'UPI: ' + OWNER_UPI;
+  document.getElementById('upi-badge').appendChild(badge);
+
+  // UPI payment string — OWNER_UPI is hardcoded, no one can redirect payment
+  const upiStr = 'upi://pay?pa=' + encodeURIComponent(OWNER_UPI) +
+                 '&pn=' + encodeURIComponent(HOSTEL_NAME) +
+                 '&am=' + amNum +
+                 '&cu=INR' +
+                 '&tn=' + encodeURIComponent(safeTn || 'Hostel Payment');
+
+  if(useqr){
+    const hostedImg = document.getElementById('hosted-qr');
+    hostedImg.onload = function(){
+      document.getElementById('qrcode').style.display = 'none';
+      hostedImg.style.display = 'block';
+    };
+    hostedImg.onerror = function(){
+      hostedImg.style.display = 'none';
+      generateQR();
+    };
+    hostedImg.src = './qr.png';
+  } else {
+    generateQR();
+  }
+
+  function generateQR(){
+    new QRCode(document.getElementById('qrcode'), {
+      text: upiStr, width: 210, height: 210,
+      colorDark: '#1a1a18', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+</script>
+</body>
+</html>
